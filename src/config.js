@@ -10,8 +10,8 @@ const fonts = [
 ];
 
 export const defaultConfig = {
-    text: '折腾日记',       // 默认文本
-    watermark: '@折腾日记', // 默认水印
+    text: '零壹碎片',       // 默认文本
+    watermark: '@零壹碎片', // 默认水印
     fontFamily: import.meta.env.VITE_APP_FONT_FAMILY,
     fontStyles: fonts.map(f => f[2]).filter(Boolean),
     fontOptions: fonts.map(([value, label]) => ({ value, label }))
