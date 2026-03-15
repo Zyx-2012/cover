@@ -43,6 +43,19 @@ export const { canvas: textCanvas, ctx: textCtx } = createCanvas(1000, 500);
 export const { canvas: watermarkCanvas, ctx: watermarkCtx } = createCanvas(1000, 500);
 export const { canvas: squareCanvas, ctx: squareCtx } = createCanvas(1000, 500);
 
+// --- 新增：生成 16 位随机文件名函数 ---
+function generateRandomFileName(length = 16) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    // 使用加密级别的随机源
+    const randomValues = new Uint32Array(length);
+    window.crypto.getRandomValues(randomValues);
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(randomValues[i] % chars.length);
+    }
+    return result;
+}
+
 export function updatePreview(type, event) {
     const updateFunctions = {
         bg: updateBackgroundImage,
@@ -64,7 +77,9 @@ export function updatePreview(type, event) {
         shadowColor: updateShadowColor,
         shadowStrength: updateShadowStrength
     };
-    updateFunctions[type](event);
+    if (updateFunctions[type]) {
+        updateFunctions[type](event);
+    }
 }
 
 export function updateText3D(event) {
@@ -224,40 +239,15 @@ export function drawSquareImage() {
             tempCanvas.height = totalSize;
             const tempCtx = tempCanvas.getContext('2d');
 
-            // 绘制背景
             if (state.iconBgSize > 0) {
                 const bgPadding = state.iconBgSize;
                 tempCtx.fillStyle = state.iconColor;
                 tempCtx.beginPath();
                 tempCtx.moveTo(radius + borderWidth - bgPadding, borderWidth - bgPadding);
-                tempCtx.arcTo(
-                    totalSize - borderWidth + bgPadding, 
-                    borderWidth - bgPadding, 
-                    totalSize - borderWidth + bgPadding, 
-                    radius + borderWidth - bgPadding, 
-                    radius
-                );
-                tempCtx.arcTo(
-                    totalSize - borderWidth + bgPadding, 
-                    totalSize - borderWidth + bgPadding, 
-                    totalSize - radius - borderWidth + bgPadding, 
-                    totalSize - borderWidth + bgPadding, 
-                    radius
-                );
-                tempCtx.arcTo(
-                    borderWidth - bgPadding, 
-                    totalSize - borderWidth + bgPadding, 
-                    borderWidth - bgPadding, 
-                    totalSize - radius - borderWidth + bgPadding, 
-                    radius
-                );
-                tempCtx.arcTo(
-                    borderWidth - bgPadding, 
-                    borderWidth - bgPadding, 
-                    radius + borderWidth - bgPadding, 
-                    borderWidth - bgPadding, 
-                    radius
-                );
+                tempCtx.arcTo(totalSize - borderWidth + bgPadding, borderWidth - bgPadding, totalSize - borderWidth + bgPadding, radius + borderWidth - bgPadding, radius);
+                tempCtx.arcTo(totalSize - borderWidth + bgPadding, totalSize - borderWidth + bgPadding, totalSize - radius - borderWidth + bgPadding, totalSize - borderWidth + bgPadding, radius);
+                tempCtx.arcTo(borderWidth - bgPadding, totalSize - borderWidth + bgPadding, borderWidth - bgPadding, totalSize - radius - borderWidth + bgPadding, radius);
+                tempCtx.arcTo(borderWidth - bgPadding, borderWidth - bgPadding, radius + borderWidth - bgPadding, borderWidth - bgPadding, radius);
                 tempCtx.closePath();
                 tempCtx.fill();
             }
@@ -272,22 +262,18 @@ export function drawSquareImage() {
             tempCtx.closePath();
             tempCtx.clip();
 
-            // 计算图像的缩放比例
             const imgAspectRatio = squareImg.width / squareImg.height;
-            const containerAspectRatio = size / size; // 因为容器是正方形，所以宽高比为1
+            const containerAspectRatio = 1;
 
             let scaledWidth, scaledHeight;
             if (imgAspectRatio > containerAspectRatio) {
-                // 图像比容器宽，按宽度缩放
                 scaledWidth = size;
                 scaledHeight = size / imgAspectRatio;
             } else {
-                // 图像比容器高，按高度缩放
                 scaledWidth = size * imgAspectRatio;
                 scaledHeight = size;
             }
 
-            // 计算图像在容器中的偏移量，使其居中
             const offsetX = (size - scaledWidth) / 2;
             const offsetY = (size - scaledHeight) / 2;
 
@@ -343,7 +329,6 @@ export function drawText() {
         textCtx.shadowOffsetY = 0;
     }
 
-    // 处理多行文本
     const lines = state.text.split('\n');
     const lineHeight = state.textSize * state.lineHeight;
     const totalHeight = lineHeight * lines.length;
@@ -378,12 +363,17 @@ export function composeCanvases() {
     }
 }
 
+// --- 已修改：使用 16 位随机文件名的保存函数 ---
 export function saveWebp() {
     if (canvas) {
         canvas.toBlob(blob => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'Canvas-Ruom.webp';
+            
+            // 生成 16 位随机名
+            const randomName = generateRandomFileName(16);
+            link.download = `${randomName}.webp`;
+            
             link.click();
             URL.revokeObjectURL(link.href);
         }, 'image/webp');
